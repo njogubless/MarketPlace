@@ -3,3 +3,8 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     is_vendor = models.BooleanField(default=False)
+    bio = models.TextField(blank=True)
+    avatar = models.URLField(blank=True)
+
+    def __str__(self):
+        return self.username
