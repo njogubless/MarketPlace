@@ -5,7 +5,7 @@ from products.models import Product
 User = settings.AUTH_USER_MODEL
 
 class Review(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCACDE, related_name='reviews')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.IntegerField()
     comment = models.TextField(blank=True)
