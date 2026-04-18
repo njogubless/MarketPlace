@@ -11,6 +11,5 @@ class VendorSerializer(serializers.ModelSerializer):
     stats= VendorStatsSerializer(read_only=True)
 
     class Meta:
-        models = Vendor
+        model = Vendor
         fields = ['id', 'shop_name', 'handle', 'description', 'logo', 'location', 'is_verified', 'created_at', 'stats']
-        
