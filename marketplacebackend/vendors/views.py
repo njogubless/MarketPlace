@@ -5,7 +5,7 @@ from .serializers import VendorSerializer
 class VendorViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Vendor.objects.all().select_related('stats')
     serializer_class = VendorSerializer
-    permission_classes = [permission.AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         qs = super().get_queryset()
