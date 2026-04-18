@@ -21,7 +21,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             qs = qs.filter(Stock__gt=0)
         return qs
 
-class CategoryViewSet(viewsets.ReadOnlyModeViewSet):
-    querryset = Category.objects.all()
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [ permissions.AllowAny]
