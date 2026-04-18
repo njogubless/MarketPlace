@@ -25,7 +25,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
    class Meta:
      model = OrderItem
-     field =['id', 'product', 'product_name', 'quantity', ' price_at_purchase', 'subtotal']
+     fields =['id', 'product', 'product_name', 'quantity', 'price_at_purchase', 'subtotal']
 
 
 
