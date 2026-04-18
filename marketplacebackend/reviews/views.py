@@ -2,7 +2,7 @@ from rest_framework import generics, permissions
 from .models import Review
 from .serializers import ReviewSerializer
 
-class ReviewListCreateiew(generics.ListCreateAPIView):
+class ReviewListCreateView(generics.ListCreateAPIView):
     serializer_class = ReviewSerializer
 
     def get_permissions(self):
