@@ -1,77 +1,48 @@
 /**
- * api/products.js
+ * src/api/products.js
  *
- * LESSON: The API layer
- * This file contains ALL functions that fetch product data.
- * Components never fetch directly — they call these functions.
+ * LESSON: Real API calls replacing mockData
+ * Your hooks (useProducts, useProduct) stay identical.
+ * Only this file changes — from reading a JS array to calling Django.
  *
- * Right now these functions return mock data with a fake delay
- * to simulate a real network request. Later you'll replace
- * `return mockData` with `return await fetch('/api/products')`.
- * Your components won't need to change at all.
- *
- * The fake delay (setTimeout) is important for learning:
- * it lets you see loading states, which is a core React/TanStack concept.
+ * DRF pagination wraps results like:
+ * { count: 20, next: "?page=2", previous: null, results: [...] }
+ * We return data.results so components get a plain array.
  */
 
-import { PRODUCTS, CATEGORIES } from './mockData.js'
+import apiClient from './client'
 
-// Simulates network latency so we can see loading states
-const delay = (ms = 600) => new Promise(res => setTimeout(res, ms))
-
-/**
- * Fetch all products, with optional filtering
- * @param {Object} filters - { category, search, sort }
- * @returns {Promise<Product[]>}
- */
-export async function fetchProducts({ category = 'all', search = '', sort = 'featured' } = {}) {
-  await delay()
-
-  let results = [...PRODUCTS]
-
-  // Filter by category
-  if (category && category !== 'all') {
-    results = results.filter(p => p.category === category)
-  }
-
-  // Filter by search term
-  if (search) {
-    const q = search.toLowerCase()
-    results = results.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      p.vendorHandle.toLowerCase().includes(q) ||
-      p.category.includes(q)
-    )
-  }
-
-  // Sort
-  switch (sort) {
-    case 'price-asc':  results.sort((a,b) => a.price - b.price);   break
-    case 'price-desc': results.sort((a,b) => b.price - a.price);   break
-    case 'rating':     results.sort((a,b) => b.rating - a.rating); break
-    case 'featured':   results.sort((a,b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break
-    default: break
-  }
-
-  return results
+// Maps the frontend sort labels to Django ordering params
+const SORT_MAP = {
+  'featured':   '-is_featured',
+  'price-asc':  'price',
+  'price-desc': '-price',
+  'rating':     '-average_rating',
+  'newest':     '-created_at',
 }
 
-/**
- * Fetch a single product by ID
- * @param {string} id
- * @returns {Promise<Product>}
- */
+export async function fetchProducts({ category, search, sort, page } = {}) {
+  const params = {}
+  if (category && category !== 'all') params.category = category
+  if (search)                         params.search   = search
+  if (sort && SORT_MAP[sort])         params.ordering = SORT_MAP[sort]
+  if (page)                           params.page     = page
+
+  const { data } = await apiClient.get('products/', { params })
+  return data.results ?? data
+}
+
 export async function fetchProductById(id) {
-  await delay(400)
-  const product = PRODUCTS.find(p => p.id === id)
-  if (!product) throw new Error(`Product ${id} not found`)
-  return product
+  const { data } = await apiClient.get(`products/${id}/`)
+  return data
 }
 
-/**
- * Fetch all categories
- */
 export async function fetchCategories() {
-  await delay(200)
-  return CATEGORIES
+  const { data } = await apiClient.get('products/categories/')
+  return data.results ?? data
+}
+
+export async function fetchFeaturedProducts() {
+  const { data } = await apiClient.get('products/featured/')
+  return data
 }
