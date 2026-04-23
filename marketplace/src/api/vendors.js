@@ -1,19 +1,27 @@
-const BASE_URL = "http://localhost:8000/api";
+/**
+ * src/api/vendors.js
+ * Matched to YOUR Vendor model: shop_name, handle, is_verified, location, stats
+ */
 
-export const fetchVendors = async () => {
-  const res = await fetch(`${BASE_URL}/vendors/`);
-  if (!res.ok) throw new Error("Failed to fetch vendors");
-  return res.json();
-};
+import apiClient from './client'
 
-export const fetchVendorById = async (id) => {
-  const res = await fetch(`${BASE_URL}/vendors/${id}/`);
-  if (!res.ok) throw new Error("Failed to fetch vendor");
-  return res.json();
-};
+const SORT_MAP = {
+  'rating':  '-stats__avg_rating',
+  'sales':   '-stats__total_sales',
+  'reviews': '-stats__total_reviews',
+  'newest':  '-created_at',
+}
 
-export const fetchVendorProducts = async (id) => {
-  const res = await fetch(`${BASE_URL}/vendors/${id}/products/`);
-  if (!res.ok) throw new Error("Failed to fetch vendor products");
-  return res.json();
-};
+export async function fetchVendors({ search, sort } = {}) {
+  const params = {}
+  if (search)                 params.search   = search
+  if (sort && SORT_MAP[sort]) params.ordering = SORT_MAP[sort]
+
+  const { data } = await apiClient.get('vendors/', { params })
+  return data.results ?? data
+}
+
+export async function fetchVendorById(id) {
+  const { data } = await apiClient.get(`vendors/${id}/`)
+  return data
+}
