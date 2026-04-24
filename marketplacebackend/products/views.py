@@ -5,7 +5,7 @@ from .models import Product, Category
 from .serializers import ProductSerializer, CategorySerializer
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all().select_related('Category')
+    queryset = Product.objects.all().select_related('category')
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
