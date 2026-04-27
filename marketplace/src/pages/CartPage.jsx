@@ -1,32 +1,52 @@
 /**
- * src/pages/CartPage.jsx
+ * src/pages/CartPage.jsx — updated to use server cart
  *
- * LESSON: This page uses only local state from CartContext.
- * No TanStack Query needed — cart data is already in memory.
- * useMemo caches the calculated totals so they only recompute when items change.
+ * LESSON: What changed from the old CartPage
+ * Before: items came from localStorage via useCart hook
+ * After:  items come from Django via useCartContext
+ *
+ * The component itself barely changes — that's the whole point
+ * of CartContext. It normalises both local and server cart into
+ * the same shape so CartPage never knows which one is active.
+ *
+ * Key difference:
+ *   removeItem(item.cartItemId)  ← uses the Django CartItem ID (not product ID)
+ *   updateQty(item.cartItemId, qty) ← same
  */
 
-import { useMemo } from 'react'
-import { Link }    from 'react-router-dom'
+import { useMemo }        from 'react'
+import { Link }           from 'react-router-dom'
 import { useCartContext } from '../context/CartContext'
+import LoadingSpinner     from '../components/ui/LoadingSpinner'
 
 export default function CartPage() {
-  const { items, removeItem, updateQty, clearCart, totalItems } = useCartContext()
+  const {
+    items,
+    removeItem,
+    updateQty,
+    clearCart,
+    totalItems,
+    totalPrice,
+    isLoading,
+  } = useCartContext()
 
-  // useMemo — only recalculates when items changes, not on every render
   const { subtotal, savings, tax, shipping, total } = useMemo(() => {
-    const subtotal = items.reduce((sum, i) => sum + Number(i.price) * i.qty, 0)
-    const savings  = items.reduce((sum, i) => {
+    const subtotal = items.reduce(
+      (sum, i) => sum + Number(i.price) * i.qty, 0
+    )
+    const savings = items.reduce((sum, i) => {
       if (i.price_old) return sum + (Number(i.price_old) - Number(i.price)) * i.qty
       return sum
     }, 0)
-    const shipping = subtotal >= 100 ? 0 : 9.99
+    const shipping = subtotal > 0 && subtotal < 100 ? 9.99 : 0
     const tax      = subtotal * 0.08
     const total    = subtotal + shipping + tax
     return { subtotal, savings, tax, shipping, total }
   }, [items])
 
-  // ── Empty cart state ───────────────────────────────────────────────────
+  if (isLoading) return <LoadingSpinner message="Loading your cart..." />
+
+  // ── Empty cart ──────────────────────────────────────────────────────────
   if (items.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -40,7 +60,7 @@ export default function CartPage() {
               Your cart is empty
             </h2>
             <p className="text-gray-500 text-sm max-w-sm">
-              Looks like you haven't added anything yet. Browse our products and find something you'll love.
+              Looks like you haven't added anything yet. Browse products and find something you'll love.
             </p>
           </div>
           <Link to="/products" className="btn-primary">
@@ -51,7 +71,7 @@ export default function CartPage() {
     )
   }
 
-  // ── Filled cart ────────────────────────────────────────────────────────
+  // ── Filled cart ─────────────────────────────────────────────────────────
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -73,17 +93,16 @@ export default function CartPage() {
 
       <div className="flex flex-col lg:flex-row gap-8">
 
-        {/* ── Left: Cart items list ── */}
+        {/* ── Cart items ── */}
         <div className="flex-1 space-y-3">
           {items.map(item => (
             <CartItemRow
-              key={item.id}
+              key={item.cartItemId ?? item.id}
               item={item}
               onUpdateQty={updateQty}
               onRemove={removeItem}
             />
           ))}
-
           <div className="pt-4">
             <Link to="/products" className="btn-secondary text-sm">
               <i className="fas fa-arrow-left" /> Continue Shopping
@@ -91,13 +110,12 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* ── Right: Order summary ── */}
+        {/* ── Order summary ── */}
         <div className="lg:w-80 flex-shrink-0">
           <div className="card-glow p-6 sticky top-20">
             <h2 className="section-title mb-5">Order Summary</h2>
 
             <div className="space-y-3 text-sm">
-
               <div className="flex justify-between">
                 <span className="text-gray-400">
                   Subtotal ({totalItems} {totalItems === 1 ? 'item' : 'items'})
@@ -105,7 +123,6 @@ export default function CartPage() {
                 <span className="text-white">${subtotal.toFixed(2)}</span>
               </div>
 
-              {/* Only show savings row if user is saving something */}
               {savings > 0 && (
                 <div className="flex justify-between text-emerald-400">
                   <span>You save</span>
@@ -125,8 +142,8 @@ export default function CartPage() {
                 <span className="text-white">${tax.toFixed(2)}</span>
               </div>
 
-              {/* Free shipping progress bar */}
-              {subtotal < 100 && (
+              {/* Free shipping progress */}
+              {subtotal > 0 && subtotal < 100 && (
                 <div className="bg-cyan-900/20 border border-cyan-800/40 rounded-xl p-3 text-xs text-cyan-400">
                   <i className="fas fa-truck-fast mr-1" />
                   Add <strong>${(100 - subtotal).toFixed(2)}</strong> more for free shipping
@@ -139,7 +156,6 @@ export default function CartPage() {
                 </div>
               )}
 
-              {/* Total */}
               <div className="border-t border-void-600 pt-3 flex justify-between items-center">
                 <span className="font-display font-semibold text-white">Total</span>
                 <span className="font-display font-bold text-xl text-white">
@@ -148,12 +164,11 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Checkout button */}
             <button className="btn-primary w-full justify-center py-3.5 mt-6">
               <i className="fas fa-lock text-xs" /> Proceed to Checkout
             </button>
 
-            {/* Payment method icons */}
+            {/* Payment icons */}
             <div className="mt-4 flex items-center justify-center gap-3 text-gray-600 text-xl">
               <i className="fab fa-cc-visa" />
               <i className="fab fa-cc-mastercard" />
@@ -181,30 +196,30 @@ export default function CartPage() {
   )
 }
 
-
-// ── CartItemRow — extracted as its own component inside this file ──────────
-//
-// LESSON: Small components used only in one place live in the same file.
-// No need to create a separate file for every tiny piece of UI.
-// Only extract to a separate file when a component is reused elsewhere.
-
+// ── CartItemRow ─────────────────────────────────────────────────────────────
 function CartItemRow({ item, onUpdateQty, onRemove }) {
-  const lineTotal  = Number(item.price) * item.qty
-  const lineSaving = item.price_old
+  // Use cartItemId (Django CartItem.id) for API calls
+  // Fall back to product id for local cart
+  const rowId     = item.cartItemId ?? item.id
+  const lineTotal = Number(item.price) * item.qty
+  const saving    = item.price_old
     ? (Number(item.price_old) - Number(item.price)) * item.qty
     : 0
 
   return (
     <div className="card p-4 flex flex-col sm:flex-row gap-4 group">
 
-      {/* Product icon / image */}
+      {/* Product image / icon */}
       <Link to={`/products/${item.id}`} className="flex-shrink-0">
-        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-void-700 to-void-800 flex items-center justify-center border border-void-600 group-hover:border-neon-purple/30 transition-colors">
-          <i className={`fas ${item.icon ?? 'fa-box'} text-2xl ${item.iconColor ?? 'text-gray-400'} opacity-70`} />
+        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-void-700 to-void-800 flex items-center justify-center border border-void-600 group-hover:border-neon-purple/30 transition-colors overflow-hidden">
+          {item.image
+            ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+            : <i className="fas fa-box text-2xl text-gray-600" />
+          }
         </div>
       </Link>
 
-      {/* Product details */}
+      {/* Details */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -215,13 +230,13 @@ function CartItemRow({ item, onUpdateQty, onRemove }) {
             </Link>
             <p className="text-xs text-gray-500 mt-0.5">
               <i className="fas fa-store mr-1 text-neon-purple/60" />
-              {item.vendor?.shop_name ?? item.vendorHandle ?? 'Unknown Vendor'}
+              {item.vendorName ?? item.vendorHandle ?? 'Unknown Vendor'}
             </p>
           </div>
 
           {/* Remove button */}
           <button
-            onClick={() => onRemove(item.id)}
+            onClick={() => onRemove(rowId)}
             className="flex-shrink-0 w-7 h-7 rounded-lg bg-void-700 hover:bg-red-900/40 border border-void-600 hover:border-red-800/60 flex items-center justify-center transition-all text-gray-500 hover:text-red-400"
             title="Remove item"
           >
@@ -229,13 +244,12 @@ function CartItemRow({ item, onUpdateQty, onRemove }) {
           </button>
         </div>
 
-        {/* Quantity + line total */}
+        {/* Qty + price */}
         <div className="flex items-center justify-between mt-3">
-
           {/* Quantity controls */}
           <div className="flex items-center border border-void-600 rounded-xl overflow-hidden">
             <button
-              onClick={() => onUpdateQty(item.id, item.qty - 1)}
+              onClick={() => onUpdateQty(rowId, item.qty - 1)}
               className="w-8 h-8 bg-void-700 hover:bg-void-600 text-gray-400 hover:text-white transition flex items-center justify-center"
             >
               <i className="fas fa-minus text-xs" />
@@ -244,18 +258,18 @@ function CartItemRow({ item, onUpdateQty, onRemove }) {
               {item.qty}
             </span>
             <button
-              onClick={() => onUpdateQty(item.id, item.qty + 1)}
+              onClick={() => onUpdateQty(rowId, item.qty + 1)}
               className="w-8 h-8 bg-void-700 hover:bg-void-600 text-gray-400 hover:text-white transition flex items-center justify-center"
             >
               <i className="fas fa-plus text-xs" />
             </button>
           </div>
 
-          {/* Line price */}
+          {/* Line total */}
           <div className="text-right">
             <p className="font-display font-bold text-white">${lineTotal.toFixed(2)}</p>
-            {lineSaving > 0 && (
-              <p className="text-[10px] text-emerald-400">saving ${lineSaving.toFixed(2)}</p>
+            {saving > 0 && (
+              <p className="text-[10px] text-emerald-400">saving ${saving.toFixed(2)}</p>
             )}
           </div>
         </div>
