@@ -1,18 +1,4 @@
-/**
- * src/pages/CartPage.jsx — updated to use server cart
- *
- * LESSON: What changed from the old CartPage
- * Before: items came from localStorage via useCart hook
- * After:  items come from Django via useCartContext
- *
- * The component itself barely changes — that's the whole point
- * of CartContext. It normalises both local and server cart into
- * the same shape so CartPage never knows which one is active.
- *
- * Key difference:
- *   removeItem(item.cartItemId)  ← uses the Django CartItem ID (not product ID)
- *   updateQty(item.cartItemId, qty) ← same
- */
+
 
 import { useMemo }        from 'react'
 import { Link }           from 'react-router-dom'
@@ -71,7 +57,6 @@ export default function CartPage() {
     )
   }
 
-  // ── Filled cart ─────────────────────────────────────────────────────────
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 

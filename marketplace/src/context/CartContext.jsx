@@ -1,26 +1,4 @@
-/**
- * src/context/CartContext.jsx — updated version
- *
- * LESSON: Hybrid cart strategy
- *
- * We use TWO cart systems depending on login state:
- *
- *   NOT logged in → localStorage cart (useLocalCart)
- *     Fast, works without backend, survives page refresh
- *     Stored in browser only — lost if user clears storage
- *
- *   Logged in → server cart (useServerCart / useCartActions)
- *     Stored in PostgreSQL via Django
- *     Works across devices, validated against stock
- *     Required for checkout
- *
- * When a user logs in, we merge their localStorage cart into
- * the server cart so they don't lose items they added anonymously.
- *
- * The components using useCartContext() don't need to know which
- * system is active — they always get the same interface:
- *   { items, totalItems, totalPrice, addItem, removeItem, updateQty, clearCart }
- */
+
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -69,7 +47,7 @@ function useLocalCart() {
   return { items, totalItems, totalPrice, addItem, removeItem, updateQty, clearItems }
 }
 
-// ── Provider ─────────────────────────────────────────────────────────────
+
 export function CartProvider({ children }) {
   const loggedIn    = !!TokenStorage.getAccess()
   const serverCart  = useCartActions()

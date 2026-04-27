@@ -1,20 +1,3 @@
-/**
- * src/components/product/ProductCard.jsx — updated
- *
- * LESSON: useMutation in a component
- *
- * The Add to Cart button now calls useCartContext().addItem().
- * If the user is logged in → hits Django API → updates server cart
- * If not logged in        → saves to localStorage → updates local cart
- *
- * We show three button states:
- *   Normal  → "Add to cart" (bag icon)
- *   Loading → spinner (mutation is pending)
- *   Success → green check for 2 seconds (then resets)
- *
- * useState(false) tracks the brief success flash.
- * setTimeout resets it after 2 seconds.
- */
 
 import { useState }       from 'react'
 import { Link }           from 'react-router-dom'

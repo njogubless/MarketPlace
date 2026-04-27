@@ -1,6 +1,4 @@
-/**
- * src/App.jsx — updated with /orders route
- */
+
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import MainLayout        from './components/layout/MainLayout'

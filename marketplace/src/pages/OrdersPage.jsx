@@ -1,13 +1,4 @@
-/**
- * src/pages/OrdersPage.jsx
- *
- * LESSON: Displaying order history
- * Calls GET /api/orders/ → returns all orders for the logged-in user.
- * Each order shows: status badge, items list, total, date.
- *
- * Status badge colors change based on order.status — this is a
- * common pattern: map a string value to a visual style.
- */
+
 
 import { Link }         from 'react-router-dom'
 import { useOrders }    from '../hooks/useServerCart'
