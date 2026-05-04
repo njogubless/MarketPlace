@@ -19,13 +19,13 @@ export async function login(payload) {
   TokenStorage.setTokens(data.access, data.refresh)
 
   // Fetch the logged-in user's profile straight after
-  const { data: user } = await apiClient.get('users/me/')
+  const { data: user } = await apiClient.get('auth/me/')
   return user
 }
 
 export async function register(payload) {
-  // POST /api/users/register/ → create account
-  await apiClient.post('users/register/', payload)
+  // POST /api/auth/register/ → create account
+  await apiClient.post('auth/register/', payload)
   // Auto-login immediately after registering
   return login({ email: payload.email, password: payload.password })
 }
